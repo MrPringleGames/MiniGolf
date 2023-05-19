@@ -10,7 +10,7 @@ public class GolfBallController : MonoBehaviour
     public float forceMultiplier = 2f;
     public float cameraDistance = 10f;
     public float cameraHeight = 5f;
-    public float cameraSmoothTime = 0.1f;
+    public float cameraSmoothTime = 0.3f;
     public float minMouseDeltaY = 10f;
 
     private Vector3 lastMousePosition;
