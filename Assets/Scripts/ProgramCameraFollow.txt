@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class CameraFollow  MonoBehaviour
+public class Camera  MonoBehaviour
 {
     public Transform target; Reference to the ball's transform
     public float smoothSpeed = 0.125f; Smoothing factor for camera movement

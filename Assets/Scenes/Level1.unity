@@ -155,10 +155,10 @@ MonoBehaviour:
   ballRigidbody: {fileID: 814378306}
   mainCamera: {fileID: 963194227}
   startingPosition: {x: 0, y: 0, z: 0}
-  forceMultiplier: 2
+  forceMultiplier: 10
   cameraDistance: 10
   cameraHeight: 5
-  cameraSmoothTime: 0.1
+  cameraSmoothTime: 1
   minMouseDeltaY: 10
 --- !u!4 &178102216
 Transform:
