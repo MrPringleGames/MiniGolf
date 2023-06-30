@@ -7,7 +7,8 @@ public class PlayerScore : MonoBehaviour
 {
     public int score;
     public Text scoreText;
-    private HoleTrigger holeManager;
+    public Text playerName;
+    public HoleTrigger holeManager;
 
     private void Start()
     {
@@ -24,21 +25,12 @@ public class PlayerScore : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Hole"))
-        {
-            holeManager.UpdateScore(score);
-            ResetScore();
-        }
-    }
-
-    private void UpdateScoreText()
+    public void UpdateScoreText()
     {
         scoreText.text = "Score: " + score;
     }
 
-    private void ResetScore()
+    public void ResetScore()
     {
         score = 0;
         UpdateScoreText();

@@ -10,7 +10,6 @@ public class HoleTrigger : MonoBehaviour
     public Scoreboard scoreboard; // Reference to the scoreboard script
 
     private int playersFinishedCount = 0; // Count of players who have finished the hole
-
     void OnTriggerEnter(Collider other)
     {
         // Check if the ball colliding with the hole belongs to a player

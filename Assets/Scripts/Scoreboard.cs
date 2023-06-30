@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -31,6 +32,11 @@ public class Scoreboard : MonoBehaviour
 
             isShowingOptions = !isShowingOptions;
         }
+    }
+
+    internal void AddScore(object playerName, int score)
+    {
+        throw new NotImplementedException();
     }
 }
 ///With this updated script, the scoreboard and game options panel will be shown when the escape key is pressed for the first time.

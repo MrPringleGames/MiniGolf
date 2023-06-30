@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Camera : MonoBehaviour
 {
+    internal static Camera main;
     public Transform target; //Reference to the ball's transform
     public float smoothSpeed = 0.125f; //Smoothing factor for camera movement
     public Vector3 offset; //Offset between the camera and the ball
