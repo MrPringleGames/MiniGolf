@@ -1,72 +1,177 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 public class BallController : MonoBehaviour
 {
-    public float forceMultiplier = 10f; // Multiplier for the force applied to the ball
-    public float maxForce = 20f; // Maximum force that can be applied to the ball
+    [SerializeField]
+    private LineRenderer ln = null;
 
-    private Rigidbody rb; // Reference to the ball's Rigidbody component
-    private bool isMoving = false; // Flag to track if the ball is currently moving
+    [SerializeField]
+    private float ballStopSpeed = 0.03f;
 
-    void Start()
+    [SerializeField]
+    private float ballLaunchForce = 10.0f;
+
+    [SerializeField]
+    private float gravityScale = 1.0f;
+
+    private Rigidbody rb = null;
+    private bool isInAimingMode = false;
+    private bool isIdle = true;
+    private bool isAiming = false;
+    private bool isBallMoving = false;
+    private Vector3 lastHoldPosition = Vector3.zero;
+    private CinemachineBrain camCinemachineBrain = null;
+    private float timeStopped;
+
+    private void Awake()
+    {
+        CacheComponents();
+    }
+    private void CacheComponents()
     {
         rb = GetComponent<Rigidbody>();
+        camCinemachineBrain = Camera.main.GetComponent<CinemachineBrain>();
     }
 
-    void Update()
+    private void Start()
     {
-        // Check if the ball is on the ground and not moving
-        if (isMoving || !IsBallOnGround())
-            return;
+        isAiming = false;
+        ln.enabled = false;
 
-        // Get input from the player to control the ball's movement
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
-
-        // Calculate the force based on the input
-        Vector3 force = new Vector3(moveHorizontal, 0f, moveVertical) * forceMultiplier;
-
-        // Apply the force to the ball
-        rb.AddForce(force);
-
-        // Clamp the magnitude of the force to the maximum value
-        rb.velocity = Vector3.ClampMagnitude(rb.velocity, maxForce);
-
-        // Set the isMoving flag to true
-        isMoving = true;
+        DisableMouseCursor();
     }
 
-    bool IsBallOnGround()
+    private void FixedUpdate()
     {
-        // Check if the ball is touching the ground or any other surface you consider valid
-        // Modify this condition based on your specific game environment
-        return Physics.Raycast(transform.position, Vector3.down, 0.1f);
-    }
-}
-///Attach the BallControl script to your ball GameObject in the scene. 
-///Adjust the forceMultiplier and maxForce values to control the force applied to the ball based on your desired gameplay mechanics.
-
-///Please note that this script assumes your ball has a Rigidbody component attached to it and 
-///requires appropriate collision detection setup in your scene for the IsBallOnGround() method to work correctly. 
-///Adjust the method as needed to match your specific game environment and detection requirements.
-
-/*{
-    private Rigidbody rb;
-    public float forceMultiplier;
-
-    void Start()
-    {
-        rb = GetComponent<Rigidbody>();
-    }
-
-    void FixedUpdate()
-    {
-        if (Input.GetMouseButtonDown(0))
+        if (rb.velocity.magnitude < ballStopSpeed)
         {
-            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3 direction = (mousePos - transform.position).normalized;
-            rb.AddForce(direction * forceMultiplier, ForceMode.Impulse);
+            timeStopped += Time.deltaTime;
+            if(timeStopped > 0.25f)
+            {
+                isBallMoving = false;
+                isIdle = true;
+                StopBall();
+            }
+        }
+        else if (rb.velocity.magnitude >= ballStopSpeed)
+        {
+            timeStopped = 0.0f;
+            isBallMoving = true;
+            isAiming = false;
+        }
+        Aim();
+   
+        Vector3 gravity = Physics.gravity.y * gravityScale * Vector3.up;
+        rb.AddForce(gravity, ForceMode.Acceleration);
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonUp(0) && isAiming && !isBallMoving && isInAimingMode)
+        {
+            Vector3 position = GetMouseClickPosition().HasValue == false ? lastHoldPosition : GetMouseClickPosition().Value;
+            LaunchBall(position);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (isIdle && !isBallMoving && !isAiming)
+            {
+                isInAimingMode = !isInAimingMode;
+
+                if (isInAimingMode)
+                {
+                    camCinemachineBrain.enabled = false;
+                    ActivateMouseCursor();
+                }
+                else
+                {
+                    camCinemachineBrain.enabled = true;
+                    DisableMouseCursor();
+                }
+            }
         }
     }
-}*/
+
+    private void Aim()
+    {
+        if (!isIdle || !isAiming) return;
+        if (!GetMouseClickPosition().HasValue) return;
+        lastHoldPosition = GetMouseClickPosition().Value;
+
+        DrawLine(GetMouseClickPosition().Value);    
+    }
+
+    private void LaunchBall(Vector3 worldPoint)
+    {
+        isInAimingMode = false;
+        isAiming = false;
+        ln.enabled = false;
+        DisableMouseCursor();
+        camCinemachineBrain.enabled = true;
+
+        Vector3 horizontalPoint = new Vector3(worldPoint.x, transform.position.y, worldPoint.z);
+        Vector3 dir = (horizontalPoint - transform.position).normalized;
+        float strenth = Vector3.Distance(transform.position, horizontalPoint);
+
+        strenth = Mathf.Clamp(strenth, 0, 15);
+        rb.AddForce(dir * strenth * ballLaunchForce);
+
+        isIdle = false;
+    }
+
+    private void StopBall()
+    {
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        isIdle = true;
+    }
+
+    private void DrawLine(Vector3 worldPoint)
+    {
+        if (worldPoint == null) return;
+
+        Vector3[] allPositions = { transform.position, worldPoint };
+
+        ln.SetPositions(allPositions);
+        ln.enabled = true;
+    }
+
+    private Vector3? GetMouseClickPosition()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        bool hasHit = Physics.Raycast(ray, out RaycastHit hit, float.MaxValue);
+        if (hasHit)
+        {
+            return hit.point;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private void OnMouseDown()
+    {
+        if (!isInAimingMode) return;
+        if (isIdle)
+        {
+            isAiming = true;
+        }
+    }
+
+    private void ActivateMouseCursor()
+    {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    private void DisableMouseCursor()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+}
