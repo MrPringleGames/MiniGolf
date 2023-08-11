@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
+using TMPro;
+using UnityEngine.SceneManagement;
+
+
 public class BallController : MonoBehaviour
 {
     [SerializeField]
@@ -25,6 +29,8 @@ public class BallController : MonoBehaviour
     private Vector3 lastHoldPosition = Vector3.zero;
     private CinemachineBrain camCinemachineBrain = null;
     private float timeStopped;
+    public int score;
+    public TMP_Text scoreText;
 
     private void Awake()
     {
@@ -94,6 +100,14 @@ public class BallController : MonoBehaviour
                 }
             }
         }
+
+        scoreText.text = "Stroke: " + score;
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ActivateMouseCursor()
+            SceneManager.LoadScene(0);
+        }
     }
 
     private void Aim()
@@ -121,6 +135,8 @@ public class BallController : MonoBehaviour
         rb.AddForce(dir * strenth * ballLaunchForce);
 
         isIdle = false;
+
+        score = score + 1;
     }
 
     private void StopBall()
